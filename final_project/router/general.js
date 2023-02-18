@@ -4,6 +4,8 @@ let books = require("./booksdb.js");
 let isValid = require("./auth_users.js").isValid;
 let users = require("./auth_users.js").users;
 const public_users = express.Router();
+const axios = require("axios");
+const http = require("http");
 
 public_users.post("/register", (req, res) => {
 	//Write your code here
@@ -91,5 +93,75 @@ public_users.get("/review/:isbn", function (req, res) {
 		return res.status(404).json({ message: "no book review found using isbn" });
 	}
 });
+
+const axiosAction = {
+	// getting the list of books available in the shop using callback
+	getAllBooks: async () => {
+		http.get("http://localhost:4000/", (res) => {
+			let data = "";
+			res.on("error", (e) => {
+				console.error(err.response ? err.response.data : err.message);
+			});
+			res.on("data", (chunk) => {
+				data += chunk;
+			});
+
+			res.on("end", () => {
+				console.log(
+					"\n\n======================All Books======================",
+				);
+				console.log(JSON.parse(data));
+			});
+		});
+	},
+
+	// getting the list of book by isbn using promise
+	getBookByisbn: (isbn) => {
+		axios
+			.get("http://localhost:4000/isbn/" + isbn)
+			.then((res) => {
+				console.log(
+					`\n\n======================Get book by isbn: ${isbn}======================`,
+				);
+				console.log(res.data);
+			})
+			.catch((err) => {
+				console.error(err.response ? err.response.data : err.message);
+			});
+	},
+
+	// getting the list of book by author
+	getBookByauthor: async (author) => {
+		try {
+			const { data } = await axios.get(
+				"http://localhost:4000/author/" + author,
+			);
+			console.log(
+				`\n\n======================Get book by author: ${author}======================`,
+			);
+			console.log(data);
+		} catch (error) {
+			console.error(error.response ? error.response.data : error.message);
+		}
+	},
+
+	//   getting the list of book by title
+	getBookBytitle: async (title) => {
+		try {
+			const { data } = await axios.get("http://localhost:4000/title/" + title);
+			console.log(
+				`\n\n======================Get book by title ${title}======================`,
+			);
+			console.log(data);
+		} catch (error) {
+			console.error(error.response ? error.response.data : error.message);
+		}
+	},
+};
+
+axiosAction.getAllBooks();
+axiosAction.getBookByisbn(1);
+axiosAction.getBookByauthor("Hans Christian Andersen");
+axiosAction.getBookBytitle("The Epic Of Gilgamesh");
 
 module.exports.general = public_users;
